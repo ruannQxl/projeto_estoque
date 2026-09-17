@@ -3,212 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TechFix - Controle de Estoque</title>
+    <title>TechFix Enterprise - Controle de Estoque</title>
+    <!-- Importando a fonte profissional Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
+            --bg-app: #f8fafc;
+            --header-bg: #0f172a; /* Azul escuro corporativo */
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
             --success: #10b981;
-            --success-hover: #059669;
             --danger: #ef4444;
             --danger-hover: #dc2626;
-            --bg-color: #f1f5f9;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
             --border-color: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Animações fluidas modernas */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
+        * { box-sizing: border-box; }
 
         body { 
-            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
-            background-color: var(--bg-color); 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-app); 
             color: var(--text-main); 
             margin: 0; 
             padding: 0;
-            animation: fadeIn 0.4s ease-out;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        header { 
-            background: linear-gradient(135deg, #3b82f6, #4f46e5); 
-            color: white; 
-            padding: 40px 20px; 
-            text-align: center; 
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
-        }
-
-        header h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
-        header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 15px; font-weight: 400; }
-
-        main { 
-            padding: 35px; 
-            max-width: 950px; 
-            margin: -30px auto 40px auto; 
-            background: var(--card-bg); 
-            border-radius: 16px; 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-            animation: fadeIn 0.6s ease-out;
-            position: relative;
-        }
-
-        .top-actions {
+        /* Barra de navegação superior estilo SaaS */
+        nav {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 18px 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            gap: 15px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
         }
 
-        h2 { margin: 0; color: var(--text-main); font-size: 22px; font-weight: 700; }
-        p.descricao { color: var(--text-muted); margin: 5px 0 0 0; font-size: 14px; }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        .botao-add { 
-            background-color: var(--success); 
+        .nav-logo {
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            color: white;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-user {
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 14px;
+            border-radius: 20px;
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Container Principal */
+        main { 
+            max-width: 1100px; 
+            margin: 40px auto; 
+            padding: 0 20px;
+        }
+
+        /* Cabeçalho da Seção e Botão de Ação */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h2 { 
+            margin: 0; 
+            color: var(--text-main); 
+            font-size: 24px; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        p.subtitle { 
+            color: var(--text-muted); 
+            margin: 6px 0 0 0; 
+            font-size: 14px; 
+        }
+
+        .btn-primary { 
+            background-color: var(--primary); 
             color: white; 
-            padding: 12px 24px; 
+            padding: 12px 22px; 
             border: none; 
             border-radius: 8px; 
             cursor: pointer; 
             font-size: 14px; 
             font-weight: 600; 
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
             display: inline-flex;
             align-items: center;
             gap: 8px;
             text-decoration: none;
         }
-        .botao-add:hover { 
-            background-color: var(--success-hover); 
+        .btn-primary:hover { 
+            background-color: var(--primary-hover); 
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
         }
-        .botao-add:active { transform: translateY(0); }
+        .btn-primary:active { transform: translateY(0); }
 
-        .table-container {
-            overflow-x: auto;
-            border-radius: 10px;
+        /* Card da Tabela */
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
             border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            overflow: hidden;
         }
 
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 16px 20px; }
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            text-align: left; 
+            white-space: nowrap;
+        }
+
         th { 
             background-color: #f8fafc; 
             color: var(--text-muted); 
             font-weight: 600; 
-            font-size: 12px; 
+            font-size: 11px; 
             text-transform: uppercase; 
-            letter-spacing: 0.08em; 
-            border-bottom: 2px solid var(--border-color);
+            letter-spacing: 0.1em; 
+            padding: 16px 24px; 
+            border-bottom: 1px solid var(--border-color);
         }
+
         td { 
+            padding: 18px 24px; 
             border-bottom: 1px solid var(--border-color); 
             font-size: 14px; 
             color: var(--text-main);
         }
-        
+
         tr {
-            transition: background-color 0.2s ease;
-            animation: slideIn 0.4s ease-out backwards;
+            transition: background-color 0.15s ease;
         }
-        tr:nth-child(even) { background-color: #fafbfc; }
-        tr:hover { background-color: #f1f5f9; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f8fafc; }
 
-        .badge {
-            background-color: #e0e7ff;
-            color: #4f46e5;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
+        /* Componentes visuais na tabela */
+        .id-badge {
+            background-color: #e2e8f0;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 6px;
             font-size: 12px;
+            font-weight: 600;
         }
 
-        .botao-excluir {
-            background-color: transparent;
+        .item-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .price-tag {
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        /* Botão de Excluir Sofisticado */
+        .btn-delete {
+            background-color: #fef2f2;
             color: var(--danger);
-            border: 1px solid #fee2e2;
-            padding: 6px 12px;
+            border: 1px solid #fecaca;
+            padding: 7px 14px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 600;
             transition: all 0.2s ease;
         }
-        .botao-excluir:hover { 
+        .btn-delete:hover { 
             background-color: var(--danger); 
-            color: white;
+            color: white; 
             border-color: var(--danger);
             transform: translateY(-1px);
         }
-        
+
         .empty-state {
             text-align: center;
-            padding: 40px;
+            padding: 50px 20px;
             color: var(--text-muted);
             font-style: italic;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>TechFix Pro</h1>
-        <p>Sistema Avançado de Gestão de Estoque</p>
-    </header>
+
+    <!-- Navbar Superior Corporativa -->
+    <nav>
+        <div class="nav-brand">
+            <div class="nav-logo">TF</div>
+            <span class="nav-title">TechFix Enterprise</span>
+        </div>
+        <div class="nav-user">
+            Painel Acadêmico • Online
+        </div>
+    </nav>
     
     <main>
-        <div class="top-actions">
+        <!-- Cabeçalho da Página -->
+        <div class="page-header">
             <div>
-                <h2>Visão Geral do Estoque</h2>
-                <p class="descricao">Gerencie componentes, telas e acessórios com precisão.</p>
+                <h2>Controle de Estoque</h2>
+                <p class="subtitle">Monitoramento em tempo real de celulares, computadores e componentes.</p>
             </div>
-            <a href="/cadastrar" class="botao-add" aria-label="Cadastrar uma nova peça no estoque">
+            <a href="/cadastrar" class="btn-primary" aria-label="Cadastrar nova peça">
                 <span>+</span> Nova Peça
             </a>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#ID</th>
-                        <th>Nome da Peça</th>
-                        <th>Quantidade</th>
-                        <th>Preço Unitário</th>
-                        <th style="text-align: right;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for peca in pecas %}
-                    <tr>
-                        <td><span class="badge">#{{ peca[0] }}</span></td>
-                        <td><strong>{{ peca[1] }}</strong></td>
-                        <td>{{ peca[2] }} un.</td>
-                        <td>R$ {{ peca[3] }}</td>
-                        <td style="text-align: right;">
-                            <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir a peça {{ peca[1] }}?');">
-                                <button type="submit" class="botao-excluir" aria-label="Excluir peça {{ peca[1] }}">Excluir</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">Nenhuma peça cadastrada no sistema ainda.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Tabela Estilizada em Card -->
+        <div class="card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome do Componente</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for peca in pecas %}
+                        <tr>
+                            <td><span class="id-badge">#{{ peca[0] }}</span></td>
+                            <td><span class="item-name">{{ peca[1] }}</span></td>
+                            <td>{{ peca[2] }} unidades</td>
+                            <td><span class="price-tag">R$ {{ peca[3] }}</span></td>
+                            <td style="text-align: right;">
+                                <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente remover o item {{ peca[1] }} do estoque?');">
+                                    <button type="submit" class="btn-delete" aria-label="Excluir item {{ peca[1] }}">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="empty-state">Nenhum componente registrado no banco de dados atualmente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 </body>
