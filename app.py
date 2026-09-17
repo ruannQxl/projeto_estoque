@@ -5,12 +5,20 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
+    # Pega o termo de busca enviado pelo usuário (se houver)
+    termo_busca = request.args.get('busca', '')
+    
     conexao = sqlite3.connect('estoque.db')
     cursor = conexao.cursor()
-    cursor.execute('SELECT * FROM pecas')
+    
+    if termo_busca:
+        # Filtra no banco de dados usando LIKE para buscar partes do nome
+        cursor.execute("SELECT * FROM pecas WHERE nome LIKE ?", ('%' + termo_busca + '%',))
+    else:
+        cursor.execute('SELECT * FROM pecas')
+        
     pecas_banco = cursor.fetchall()
     
-    # Calculando métricas profissionais para o Dashboard
     total_tipos = len(pecas_banco)
     total_unidades = sum(p[2] for p in pecas_banco) if pecas_banco else 0
     valor_total_estoque = sum(p[2] * p[3] for p in pecas_banco) if pecas_banco else 0
@@ -20,7 +28,8 @@ def home():
                            pecas=pecas_banco, 
                            total_tipos=total_tipos, 
                            total_unidades=total_unidades, 
-                           valor_total_estoque=valor_total_estoque)
+                           valor_total_estoque=valor_total_estoque,
+                           termo_busca=termo_busca)
 
 @app.route('/cadastrar', methods=['GET', 'POST'])
 def cadastrar():
