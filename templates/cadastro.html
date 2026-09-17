@@ -5,12 +5,13 @@
     <title>Cadastrar Peça - TechFix</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
-        form { background: white; max-width: 400px; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        form { background: white; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         label { font-weight: bold; display: block; margin-top: 15px; }
         input { width: 90%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
         button { background-color: #28a745; color: white; padding: 12px; margin-top: 25px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
         button:hover { background-color: #218838; }
         .voltar { display: block; text-align: center; margin-top: 15px; color: #0056b3; text-decoration: none; }
+        .sessao-fornecedor { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin-top: 20px; border: 1px dashed #adb5bd; }
     </style>
 </head>
 <body>
@@ -18,7 +19,7 @@
         <h2>Adicionar Nova Peça</h2>
         
         <label for="nome">Nome da Peça:</label>
-        <input type="text" id="nome" name="nome" placeholder="Ex: Tela iPhone 11" required>
+        <input type="text" id="nome" name="nome" required>
         
         <label for="quantidade">Quantidade no Estoque:</label>
         <input type="number" id="quantidade" name="quantidade" required>
@@ -26,8 +27,44 @@
         <label for="preco">Preço (R$):</label>
         <input type="number" step="0.01" id="preco" name="preco" required>
         
+        <div class="sessao-fornecedor">
+            <h3>Fornecedor (Integração API)</h3>
+            <label for="cep">Digite o CEP (apenas números):</label>
+            <input type="text" id="cep" name="cep" maxlength="8">
+            
+            <label for="rua">Rua:</label>
+            <input type="text" id="rua" name="rua">
+            
+            <label for="bairro">Bairro:</label>
+            <input type="text" id="bairro" name="bairro">
+        </div>
+        
         <button type="submit">Salvar no Banco de Dados</button>
         <a href="/" class="voltar">Voltar para o Início</a>
     </form>
+
+    <!-- Aqui começa o Script Web (Javascript) exigido no projeto -->
+    <script>
+        // Fica "escutando" o campo de CEP. Quando você terminar de digitar (blur), ele roda.
+        document.getElementById('cep').addEventListener('blur', function() {
+            let cep = this.value;
+            
+            if(cep.length === 8) {
+                // Faz a chamada (fetch) para a API pública do ViaCEP
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(resposta => resposta.json())
+                .then(dados => {
+                    if(!dados.erro) {
+                        // Preenche a rua e o bairro sozinhos com os dados da API!
+                        document.getElementById('rua').value = dados.logradouro;
+                        document.getElementById('bairro').value = dados.bairro;
+                    } else {
+                        alert("CEP não encontrado pela API!");
+                    }
+                })
+                .catch(erro => console.error("Erro na API:", erro));
+            }
+        });
+    </script>
 </body>
 </html>
