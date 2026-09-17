@@ -6,127 +6,210 @@
     <title>TechFix - Controle de Estoque</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --success: #16a34a;
-            --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --bg-color: #f8fafc;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg-color: #f1f5f9;
             --card-bg: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        /* Animações fluidas modernas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
             margin: 0; 
             padding: 0;
+            animation: fadeIn 0.4s ease-out;
         }
 
         header { 
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+            background: linear-gradient(135deg, #3b82f6, #4f46e5); 
             color: white; 
-            padding: 30px 20px; 
+            padding: 40px 20px; 
             text-align: center; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
         }
 
-        header h1 { margin: 0; font-size: 26px; font-weight: 700; }
-        header p { margin: 8px 0 0 0; opacity: 0.9; font-size: 14px; }
+        header h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+        header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 15px; font-weight: 400; }
 
         main { 
-            padding: 30px; 
-            max-width: 900px; 
-            margin: 30px auto; 
+            padding: 35px; 
+            max-width: 950px; 
+            margin: -30px auto 40px auto; 
             background: var(--card-bg); 
-            border-radius: 12px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-radius: 16px; 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            animation: fadeIn 0.6s ease-out;
+            position: relative;
         }
 
-        h2 { margin-top: 0; color: var(--text-main); font-size: 20px; }
-        p.descricao { color: var(--text-muted); margin-bottom: 25px; }
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h2 { margin: 0; color: var(--text-main); font-size: 22px; font-weight: 700; }
+        p.descricao { color: var(--text-muted); margin: 5px 0 0 0; font-size: 14px; }
 
         .botao-add { 
             background-color: var(--success); 
             color: white; 
-            padding: 12px 20px; 
+            padding: 12px 24px; 
             border: none; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             cursor: pointer; 
-            font-size: 15px; 
+            font-size: 14px; 
             font-weight: 600; 
-            transition: background 0.2s;
-            display: inline-block;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
         }
-        .botao-add:hover { background-color: #15803d; }
+        .botao-add:hover { 
+            background-color: var(--success-hover); 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3);
+        }
+        .botao-add:active { transform: translateY(0); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; overflow: hidden; border-radius: 8px; }
-        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f1f5f9; color: var(--text-main); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
-        tr:hover { background-color: #f8fafc; }
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; }
+        th { 
+            background-color: #f8fafc; 
+            color: var(--text-muted); 
+            font-weight: 600; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.08em; 
+            border-bottom: 2px solid var(--border-color);
+        }
+        td { 
+            border-bottom: 1px solid var(--border-color); 
+            font-size: 14px; 
+            color: var(--text-main);
+        }
+        
+        tr {
+            transition: background-color 0.2s ease;
+            animation: slideIn 0.4s ease-out backwards;
+        }
+        tr:nth-child(even) { background-color: #fafbfc; }
+        tr:hover { background-color: #f1f5f9; }
+
+        .badge {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
 
         .botao-excluir {
-            background-color: var(--danger);
-            color: white;
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid #fee2e2;
             padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
             font-weight: 600;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
         }
-        .botao-excluir:hover { background-color: var(--danger-hover); }
+        .botao-excluir:hover { 
+            background-color: var(--danger); 
+            color: white;
+            border-color: var(--danger);
+            transform: translateY(-1px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>TechFix</h1>
-        <p>Painel Inteligente de Controle de Peças (Celulares e PCs)</p>
+        <h1>TechFix Pro</h1>
+        <p>Sistema Avançado de Gestão de Estoque</p>
     </header>
     
     <main>
-        <h2>Resumo do Estoque</h2>
-        <p class="descricao">Gerencie telas, baterias e componentes com agilidade.</p>
-        
-        <a href="/cadastrar" style="text-decoration: none;">
-            <button class="botao-add" aria-label="Cadastrar uma nova peça no estoque">
-                + Cadastrar Nova Peça
-            </button>
-        </a>
+        <div class="top-actions">
+            <div>
+                <h2>Visão Geral do Estoque</h2>
+                <p class="descricao">Gerencie componentes, telas e acessórios com precisão.</p>
+            </div>
+            <a href="/cadastrar" class="botao-add" aria-label="Cadastrar uma nova peça no estoque">
+                <span>+</span> Nova Peça
+            </a>
+        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome da Peça</th>
-                    <th>Quantidade</th>
-                    <th>Preço (R$)</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for peca in pecas %}
-                <tr>
-                    <td>{{ peca[0] }}</td>
-                    <td><strong>{{ peca[1] }}</strong></td>
-                    <td>{{ peca[2] }} un.</td>
-                    <td>R$ {{ peca[3] }}</td>
-                    <td>
-                        <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir {{ peca[1] }}?');">
-                            <button type="submit" class="botao-excluir" aria-label="Excluir peça {{ peca[1] }}">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align: center; color: var(--text-muted);">Nenhuma peça cadastrada ainda.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#ID</th>
+                        <th>Nome da Peça</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unitário</th>
+                        <th style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for peca in pecas %}
+                    <tr>
+                        <td><span class="badge">#{{ peca[0] }}</span></td>
+                        <td><strong>{{ peca[1] }}</strong></td>
+                        <td>{{ peca[2] }} un.</td>
+                        <td>R$ {{ peca[3] }}</td>
+                        <td style="text-align: right;">
+                            <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir a peça {{ peca[1] }}?');">
+                                <button type="submit" class="botao-excluir" aria-label="Excluir peça {{ peca[1] }}">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">Nenhuma peça cadastrada no sistema ainda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </main>
 </body>
 </html>
