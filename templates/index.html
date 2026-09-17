@@ -3,28 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque - Manutenção</title>
+    <title>TechFix - Controle de Estoque</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; }
-        header { background-color: #0056b3; color: white; padding: 20px; text-align: center; }
-        main { padding: 30px; max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px;}
-        .botao-add { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
-        .botao-add:hover { background-color: #218838; }
-        /* Estilos da nova tabela */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: center; }
-        th { background-color: #0056b3; color: white; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0;
+        }
+
+        header { 
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+            color: white; 
+            padding: 30px 20px; 
+            text-align: center; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 { margin: 0; font-size: 26px; font-weight: 700; }
+        header p { margin: 8px 0 0 0; opacity: 0.9; font-size: 14px; }
+
+        main { 
+            padding: 30px; 
+            max-width: 900px; 
+            margin: 30px auto; 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 { margin-top: 0; color: var(--text-main); font-size: 20px; }
+        p.descricao { color: var(--text-muted); margin-bottom: 25px; }
+
+        .botao-add { 
+            background-color: var(--success); 
+            color: white; 
+            padding: 12px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: 600; 
+            transition: background 0.2s;
+            display: inline-block;
+        }
+        .botao-add:hover { background-color: #15803d; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; overflow: hidden; border-radius: 8px; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; color: var(--text-main); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+        tr:hover { background-color: #f8fafc; }
+
+        .botao-excluir {
+            background-color: var(--danger);
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .botao-excluir:hover { background-color: var(--danger-hover); }
     </style>
 </head>
 <body>
     <header>
-        <h1>Painel de Estoque</h1>
-        <p>Controle de Peças - Celulares e PCs</p>
+        <h1>TechFix</h1>
+        <p>Painel Inteligente de Controle de Peças (Celulares e PCs)</p>
     </header>
     
     <main>
         <h2>Resumo do Estoque</h2>
-        <p>Gerencie as telas, baterias e placas da loja.</p>
+        <p class="descricao">Gerencie telas, baterias e componentes com agilidade.</p>
         
         <a href="/cadastrar" style="text-decoration: none;">
             <button class="botao-add" aria-label="Cadastrar uma nova peça no estoque">
@@ -32,7 +97,6 @@
             </button>
         </a>
 
-        <!-- Tabela que mostra os dados do banco -->
         <table>
             <thead>
                 <tr>
@@ -40,20 +104,25 @@
                     <th>Nome da Peça</th>
                     <th>Quantidade</th>
                     <th>Preço (R$)</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Este bloco de código conversa com o Python para listar as peças -->
                 {% for peca in pecas %}
                 <tr>
                     <td>{{ peca[0] }}</td>
-                    <td>{{ peca[1] }}</td>
-                    <td>{{ peca[2] }}</td>
+                    <td><strong>{{ peca[1] }}</strong></td>
+                    <td>{{ peca[2] }} un.</td>
                     <td>R$ {{ peca[3] }}</td>
+                    <td>
+                        <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente excluir {{ peca[1] }}?');">
+                            <button type="submit" class="botao-excluir" aria-label="Excluir peça {{ peca[1] }}">Excluir</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4">Nenhuma peça cadastrada ainda.</td>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted);">Nenhuma peça cadastrada ainda.</td>
                 </tr>
                 {% endfor %}
             </tbody>
