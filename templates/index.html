@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TechFix Enterprise - Controle de Estoque</title>
-    <!-- Importando a fonte profissional Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-app: #f8fafc;
-            --header-bg: #0f172a; /* Azul escuro corporativo */
+            --header-bg: #0f172a;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
@@ -17,7 +16,6 @@
             --primary-hover: #1d4ed8;
             --success: #10b981;
             --danger: #ef4444;
-            --danger-hover: #dc2626;
             --border-color: #e2e8f0;
             --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
@@ -35,10 +33,9 @@
             color: var(--text-main); 
             margin: 0; 
             padding: 0;
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: fadeIn 0.4s ease-out;
         }
 
-        /* Barra de navegação superior estilo SaaS */
         nav {
             background-color: var(--header-bg);
             color: white;
@@ -49,212 +46,114 @@
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
         }
 
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .nav-brand { display: flex; align-items: center; gap: 12px; }
         .nav-logo {
             background: linear-gradient(135deg, #2563eb, #06b6d4);
-            color: white;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 18px;
-            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            color: white; width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-weight: 700; font-size: 18px;
         }
+        .nav-title { font-size: 18px; font-weight: 700; }
+        .nav-user { font-size: 13px; background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: 20px; color: #cbd5e1; }
 
-        .nav-title {
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-        }
+        main { max-width: 1100px; margin: 35px auto; padding: 0 20px; }
 
-        .nav-user {
-            font-size: 13px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
-            border-radius: 20px;
-            color: #cbd5e1;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        /* Container Principal */
-        main { 
-            max-width: 1100px; 
-            margin: 40px auto; 
-            padding: 0 20px;
-        }
-
-        /* Cabeçalho da Seção e Botão de Ação */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+        /* GRID DE MÉTRICAS (DASHBOARD) */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
+            margin-bottom: 30px;
         }
 
-        h2 { 
-            margin: 0; 
-            color: var(--text-main); 
-            font-size: 24px; 
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        
-        p.subtitle { 
-            color: var(--text-muted); 
-            margin: 6px 0 0 0; 
-            font-size: 14px; 
-        }
-
-        .btn-primary { 
-            background-color: var(--primary); 
-            color: white; 
-            padding: 12px 22px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            font-weight: 600; 
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-        .btn-primary:hover { 
-            background-color: var(--primary-hover); 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
-        }
-        .btn-primary:active { transform: translateY(0); }
-
-        /* Card da Tabela */
-        .card {
+        .metric-card {
             background: var(--card-bg);
+            padding: 24px;
             border-radius: 14px;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
+            position: relative;
             overflow: hidden;
         }
 
-        .table-responsive {
-            overflow-x: auto;
+        .metric-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
         }
+        .metric-card.success::before { background: var(--success); }
+        .metric-card.warning::before { background: #f59e0b; }
 
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            text-align: left; 
-            white-space: nowrap;
-        }
+        .metric-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-top: 8px; }
 
-        th { 
-            background-color: #f8fafc; 
-            color: var(--text-muted); 
-            font-weight: 600; 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            letter-spacing: 0.1em; 
-            padding: 16px 24px; 
-            border-bottom: 1px solid var(--border-color);
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 25px; flex-wrap: wrap; gap: 20px;
         }
+        h2 { margin: 0; font-size: 22px; font-weight: 700; }
+        p.subtitle { color: var(--text-muted); margin: 4px 0 0 0; font-size: 14px; }
 
-        td { 
-            padding: 18px 24px; 
-            border-bottom: 1px solid var(--border-color); 
-            font-size: 14px; 
-            color: var(--text-main);
+        .btn-primary { 
+            background-color: var(--primary); color: white; padding: 12px 22px; 
+            border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; 
+            transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
         }
+        .btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
 
-        tr {
-            transition: background-color 0.15s ease;
-        }
-        tr:last-child td { border-bottom: none; }
+        .card { background: var(--card-bg); border-radius: 14px; border: 1px solid var(--border-color); box-shadow: var(--shadow); overflow: hidden; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; padding: 16px 24px; border-bottom: 1px solid var(--border-color); }
+        td { padding: 18px 24px; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         tr:hover { background-color: #f8fafc; }
 
-        /* Componentes visuais na tabela */
-        .id-badge {
-            background-color: #e2e8f0;
-            color: #475569;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+        .id-badge { background-color: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .price-tag { font-weight: 600; color: var(--success); }
 
-        .item-name {
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .price-tag {
-            font-weight: 600;
-            color: var(--success);
-        }
-
-        /* Botão de Excluir Sofisticado */
         .btn-delete {
-            background-color: #fef2f2;
-            color: var(--danger);
-            border: 1px solid #fecaca;
-            padding: 7px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s ease;
+            background-color: #fef2f2; color: var(--danger); border: 1px solid #fecaca;
+            padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s ease;
         }
-        .btn-delete:hover { 
-            background-color: var(--danger); 
-            color: white; 
-            border-color: var(--danger);
-            transform: translateY(-1px);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--text-muted);
-            font-style: italic;
-        }
+        .btn-delete:hover { background-color: var(--danger); color: white; border-color: var(--danger); }
+        .empty-state { text-align: center; padding: 50px; color: var(--text-muted); font-style: italic; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar Superior Corporativa -->
     <nav>
         <div class="nav-brand">
             <div class="nav-logo">TF</div>
             <span class="nav-title">TechFix Enterprise</span>
         </div>
-        <div class="nav-user">
-            Painel Acadêmico • Online
-        </div>
+        <div class="nav-user">Painel Acadêmico • Online</div>
     </nav>
     
     <main>
-        <!-- Cabeçalho da Página -->
-        <div class="page-header">
-            <div>
-                <h2>Controle de Estoque</h2>
-                <p class="subtitle">Monitoramento em tempo real de celulares, computadores e componentes.</p>
+        <!-- CARDS DE MÉTRICAS (DASHBOARD VISUAL) -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Tipos de Peças Cadastradas</div>
+                <div class="metric-value">{{ total_tipos }}</div>
             </div>
-            <a href="/cadastrar" class="btn-primary" aria-label="Cadastrar nova peça">
-                <span>+</span> Nova Peça
-            </a>
+            <div class="metric-card success">
+                <div class="metric-title">Total de Unidades em Estoque</div>
+                <div class="metric-value">{{ total_unidades }} un.</div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-title">Valor Total do Estoque</div>
+                <div class="metric-value">R$ {{ "%.2f"|format(valor_total_estoque) }}</div>
+            </div>
         </div>
 
-        <!-- Tabela Estilizada em Card -->
+        <div class="page-header">
+            <div>
+                <h2>Gerenciamento de Componentes</h2>
+                <p class="subtitle">Acompanhe e controle o fluxo de itens para celulares e computadores.</p>
+            </div>
+            <a href="/cadastrar" class="btn-primary">+ Nova Peça</a>
+        </div>
+
         <div class="card">
             <div class="table-responsive">
                 <table>
@@ -271,18 +170,18 @@
                         {% for peca in pecas %}
                         <tr>
                             <td><span class="id-badge">#{{ peca[0] }}</span></td>
-                            <td><span class="item-name">{{ peca[1] }}</span></td>
+                            <td><strong>{{ peca[1] }}</strong></td>
                             <td>{{ peca[2] }} unidades</td>
                             <td><span class="price-tag">R$ {{ peca[3] }}</span></td>
                             <td style="text-align: right;">
-                                <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja realmente remover o item {{ peca[1] }} do estoque?');">
-                                    <button type="submit" class="btn-delete" aria-label="Excluir item {{ peca[1] }}">Excluir</button>
+                                <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja excluir {{ peca[1] }}?');">
+                                    <button type="submit" class="btn-delete">Excluir</button>
                                 </form>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="empty-state">Nenhum componente registrado no banco de dados atualmente.</td>
+                            <td colspan="5" class="empty-state">Nenhum componente registrado no sistema atualmente.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

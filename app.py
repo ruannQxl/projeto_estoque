@@ -9,22 +9,33 @@ def home():
     cursor = conexao.cursor()
     cursor.execute('SELECT * FROM pecas')
     pecas_banco = cursor.fetchall()
+    
+    # Calculando métricas profissionais para o Dashboard
+    total_tipos = len(pecas_banco)
+    total_unidades = sum(p[2] for p in pecas_banco) if pecas_banco else 0
+    valor_total_estoque = sum(p[2] * p[3] for p in pecas_banco) if pecas_banco else 0
+    
     conexao.close()
-    return render_template('index.html', pecas=pecas_banco)
+    return render_template('index.html', 
+                           pecas=pecas_banco, 
+                           total_tipos=total_tipos, 
+                           total_unidades=total_unidades, 
+                           valor_total_estoque=valor_total_estoque)
 
 @app.route('/cadastrar', methods=['GET', 'POST'])
 def cadastrar():
     if request.method == 'POST':
         nome = request.form['nome']
-        quantidade = request.form['quantidade']
-        preco = request.form['preco']
+        quantidade = int(request.form['quantidade'])
+        preco = float(request.form['preco'])
         cep = request.form['cep']
         rua = request.form['rua']
         bairro = request.form['bairro']
         
         conexao = sqlite3.connect('estoque.db')
         cursor = conexao.cursor()
-        cursor.execute('INSERT INTO pecas (nome, quantidade, preco, cep, rua, bairro) VALUES (?, ?, ?, ?, ?, ?)', (nome, quantidade, preco, cep, rua, bairro))
+        cursor.execute('INSERT INTO pecas (nome, quantidade, preco, cep, rua, bairro) VALUES (?, ?, ?, ?, ?, ?)', 
+                       (nome, quantidade, preco, cep, rua, bairro))
         conexao.commit()
         conexao.close()
         
