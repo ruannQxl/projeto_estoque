@@ -1,14 +1,20 @@
+"""
+Essa parte é o banco de dados
+"""
+
 import sqlite3
 
 conexao = sqlite3.connect('estoque.db')
 cursor = conexao.cursor()
-
+"""Aqui vai ficar os campos do cadastro de itens"""
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS pecas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
+        Nome TEXT NOT NULL,
         quantidade INTEGER NOT NULL,
         preco REAL NOT NULL,
+        fornecedor TEXT,
+        observacao TEXT,
         cep TEXT,
         rua TEXT,
         bairro TEXT

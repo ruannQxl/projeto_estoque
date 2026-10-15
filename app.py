@@ -37,14 +37,16 @@ def cadastrar():
         nome = request.form['nome']
         quantidade = int(request.form['quantidade'])
         preco = float(request.form['preco'])
+        fornecedor = request.form['fornecedor']
+        observacao = request.form['observacao']
         cep = request.form['cep']
         rua = request.form['rua']
         bairro = request.form['bairro']
         
         conexao = sqlite3.connect('estoque.db')
         cursor = conexao.cursor()
-        cursor.execute('INSERT INTO pecas (nome, quantidade, preco, cep, rua, bairro) VALUES (?, ?, ?, ?, ?, ?)', 
-                       (nome, quantidade, preco, cep, rua, bairro))
+        cursor.execute('INSERT INTO pecas (nome, quantidade, preco, fornecedor, observacao, cep, rua, bairro) VALUES (?, ?, ?, ?, ?, ?)', 
+                       (nome, quantidade, preco, fornecedor, observacao, cep, rua, bairro))
         conexao.commit()
         conexao.close()
         
