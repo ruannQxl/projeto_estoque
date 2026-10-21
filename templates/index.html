@@ -181,16 +181,18 @@
                             <td><span class="id-badge">#{{ peca[0] }}</span></td>
                             <td><strong>{{ peca[1] }}</strong></td>
                             <td>{{ peca[2] }} unidades</td>
-                            <td><span class="price-tag">R$ {{ peca[3] }}</span></td>
+                            <td><span class="price-tag">R$ {{ "%.2f"|format(peca[3]) }}</span></td>
+                            <td>{{ peca[4] or "-" }}</td>
+                            <td>{{ peca[5] or "-" }}</td>
                             <td style="text-align: right;">
-                                <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja excluir {{ peca[1] }}?');">
+                                <form action="/deletar/{{ peca[0] }}" method="POST" style="display:inline;" onsubmit="return confirm('Deseja excluir ' + {{ peca[1]|tojson }} + '?');">
                                     <button type="submit" class="btn-delete">Excluir</button>
                                 </form>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="empty-state">
+                            <td colspan="7" class="empty-state">
                                 {% if termo_busca %}
                                     Nenhum resultado encontrado para "{{ termo_busca }}".
                                 {% else %}

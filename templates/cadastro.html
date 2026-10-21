@@ -58,6 +58,8 @@
         .form-row { display: flex; gap: 15px; }
         .form-row .form-group { flex: 1; }
 
+        .erro { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; }
+
         .btn-group { display: flex; gap: 12px; margin-top: 30px; }
         
         .btn-submit {
@@ -85,46 +87,50 @@
             <h2>Cadastrar Novo Componente</h2>
             <p class="subtitle">Preencha os dados do item e o endereço de origem para registro.</p>
             
+            {% if erro %}
+            <div class="erro">{{ erro }}</div>
+            {% endif %}
+
             <form action="/cadastrar" method="POST">
                 <div class="form-group">
                     <label for="nome">Nome da Peça (Ex: Tela iPhone 13 / SSD 512GB)</label>
-                    <input type="text" id="nome" name="nome" required placeholder="Digite o nome do componente">
+                    <input type="text" id="nome" name="nome" required placeholder="Digite o nome do componente" value="{{ form.get('nome', '') }}">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="quantidade">Quantidade</label>
-                        <input type="number" id="quantidade" name="quantidade" required placeholder="0">
+                        <input type="number" id="quantidade" name="quantidade" min="0" step="1" required placeholder="0" value="{{ form.get('quantidade', '') }}">
                     </div>
                     <div class="form-group">
                         <label for="preco">Preço Unitário (R$)</label>
-                        <input type="number" step="0.01" id="preco" name="preco" required placeholder="0.00">
+                        <input type="number" step="0.01" min="0" id="preco" name="preco" required placeholder="0.00" value="{{ form.get('preco', '') }}">
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="fornecedor">Fornecedor da Peça (Nome do vendedor ou empresa)</label>
-                    <input type="text" id="fornecedor" name="fornecedor" required placeholder="Digite o nome do fornecedor">
+                    <input type="text" id="fornecedor" name="fornecedor" required placeholder="Digite o nome do fornecedor" value="{{ form.get('fornecedor', '') }}">
                 </div>
 
                 <div class="form-group">
                     <label for="observacao">Observação </label>
-                    <input type="text" id="observacao" name="observacao" required placeholder="Digite uma observação">
+                    <input type="text" id="observacao" name="observacao" required placeholder="Digite uma observação" value="{{ form.get('observacao', '') }}">
                 </div>
 
                 <div class="form-group">
                     <label for="cep">CEP</label>
-                    <input type="text" id="cep" name="cep" placeholder="Digite o CEP (Apenas números)" maxlength="8">
+                    <input type="text" id="cep" name="cep" placeholder="Digite o CEP (Apenas números)" maxlength="8" value="{{ form.get('cep', '') }}">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="rua">Rua / Logradouro</label>
-                        <input type="text" id="rua" name="rua" placeholder="Preenchido automaticamente">
+                        <input type="text" id="rua" name="rua" placeholder="Preenchido automaticamente" value="{{ form.get('rua', '') }}">
                     </div>
                     <div class="form-group">
                         <label for="bairro">Bairro</label>
-                        <input type="text" id="bairro" name="bairro" placeholder="Preenchido automaticamente">
+                        <input type="text" id="bairro" name="bairro" placeholder="Preenchido automaticamente" value="{{ form.get('bairro', '') }}">
                     </div>
                 </div>
 
@@ -146,11 +152,14 @@
                     .then(response => response.json())
                     .then(dados => {
                         if (!dados.erro) {
-                            document.getElementById('rua').value = dados.logradouro;
-                            document.getElementById('bairro').value = dados.bairro;
+                            document.getElementById('rua').value = dados.logradouro || '';
+                            document.getElementById('bairro').value = dados.bairro || '';
                         } else {
                             alert('CEP não encontrado!');
                         }
+                    })
+                    .catch(() => {
+                        alert('Não foi possível consultar o CEP agora. Preencha rua e bairro manualmente.');
                     });
             }
         });
