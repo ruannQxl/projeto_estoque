@@ -1,14 +1,15 @@
 # Projeto Estoque
 
-Sistema web de controle de estoque (Python, Flask, SQLite, HTML/CSS/JavaScript e API ViaCEP).
+Sistema simples de gerenciamento de estoque em Flask com SQLite.
+
+## Recursos
+- Cadastro de itens com campo de data
+- Edição de itens existentes
+- Recursos de acessibilidade (WCAG / ARIA attributes)
+- Estrutura para login via API externa (Google OAuth)
+- Banco de dados SQLite simples
 
 ## Como executar
-
-    pip install -r requirements.txt
-    python app.py
-
-Acesse http://127.0.0.1:5000. O banco `estoque.db` é criado (ou atualizado) automaticamente.
-
-## Testes
-
-    python testes.py
+1. Instale as dependências: `pip install -r requirements.txt`
+2. Crie o banco de dados: `python criar_banco.py`
+3. Execute a aplicação: `python app.py`

@@ -1,113 +1,66 @@
-import os
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 
-from flask import Flask, render_template, request, redirect
-
-from criar_banco import CAMINHO_PADRAO, criar_ou_atualizar_banco
-
 app = Flask(__name__)
-app.config['DATABASE'] = CAMINHO_PADRAO
+app.secret_key = 'sua_chave_secreta'
 
-COLUNAS = 'id, nome, quantidade, preco, fornecedor, observacao'
-
-
-def conectar():
-    return sqlite3.connect(app.config['DATABASE'])
-
-
-def validar_formulario(form):
-    """Lê e valida os dados do cadastro. Retorna (dados, erro)."""
-    nome = form.get('nome', '').strip()
-    fornecedor = form.get('fornecedor', '').strip()
-    observacao = form.get('observacao', '').strip()
-    cep = ''.join(c for c in form.get('cep', '') if c.isdigit())
-    rua = form.get('rua', '').strip()
-    bairro = form.get('bairro', '').strip()
-
-    if not nome:
-        return None, 'Informe o nome da peça.'
-
-    try:
-        quantidade = int(form.get('quantidade', ''))
-    except ValueError:
-        return None, 'A quantidade deve ser um número inteiro.'
-    if quantidade < 0:
-        return None, 'A quantidade não pode ser negativa.'
-
-    try:
-        preco = float(form.get('preco', '').replace(',', '.'))
-    except ValueError:
-        return None, 'O preço deve ser um número válido.'
-    if preco < 0:
-        return None, 'O preço não pode ser negativo.'
-
-    return (nome, quantidade, preco, fornecedor, observacao, cep, rua, bairro), None
-
+def conectar_banco():
+    return sqlite3.connect('estoque.db')
 
 @app.route('/')
-def home():
-    # Pega o termo de busca enviado pelo usuário (se houver)
-    termo_busca = request.args.get('busca', '').strip()
-
-    conexao = conectar()
+def index():
+    conexao = conectar_banco()
     cursor = conexao.cursor()
-
-    if termo_busca:
-        # Filtra no banco de dados usando LIKE para buscar partes do nome
-        cursor.execute(f'SELECT {COLUNAS} FROM pecas WHERE nome LIKE ?',
-                       ('%' + termo_busca + '%',))
-    else:
-        cursor.execute(f'SELECT {COLUNAS} FROM pecas')
-
-    pecas_banco = cursor.fetchall()
+    cursor.execute('SELECT id, nome, quantidade, preco, data FROM itens')
+    itens = cursor.fetchall()
     conexao.close()
+    return render_template('index.html', itens=itens)
 
-    total_tipos = len(pecas_banco)
-    total_unidades = sum(p[2] for p in pecas_banco)
-    valor_total_estoque = sum(p[2] * p[3] for p in pecas_banco)
-
-    return render_template('index.html',
-                           pecas=pecas_banco,
-                           total_tipos=total_tipos,
-                           total_unidades=total_unidades,
-                           valor_total_estoque=valor_total_estoque,
-                           termo_busca=termo_busca)
-
-
-@app.route('/cadastrar', methods=['GET', 'POST'])
-def cadastrar():
+@app.route('/cadastro', methods=['GET', 'POST'])
+def cadastro():
     if request.method == 'POST':
-        dados, erro = validar_formulario(request.form)
-        if erro:
-            # Reexibe o formulário com a mensagem e os valores digitados
-            return render_template('cadastro.html', erro=erro, form=request.form), 400
-
-        conexao = conectar()
+        nome = request.form['nome']
+        quantidade = request.form['quantidade']
+        preco = request.form['preco']
+        data = request.form['data']
+        
+        conexao = conectar_banco()
         cursor = conexao.cursor()
-        cursor.execute(
-            'INSERT INTO pecas (nome, quantidade, preco, fornecedor, observacao, cep, rua, bairro) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)', dados)
+        cursor.execute('INSERT INTO itens (nome, quantidade, preco, data) VALUES (?, ?, ?, ?)',
+                       (nome, quantidade, preco, data))
         conexao.commit()
         conexao.close()
+        return redirect(url_for('index'))
+    return render_template('cadastro.html')
 
-        return redirect('/')
-
-    return render_template('cadastro.html', erro=None, form={})
-
-
-@app.route('/deletar/<int:id>', methods=['POST'])
-def deletar(id):
-    conexao = conectar()
+@app.route('/editar/<int:id>', methods=['GET', 'POST'])
+def editar(id):
+    conexao = conectar_banco()
     cursor = conexao.cursor()
-    cursor.execute('DELETE FROM pecas WHERE id = ?', (id,))
-    conexao.commit()
+    
+    if request.method == 'POST':
+        nome = request.form['nome']
+        quantidade = request.form['quantidade']
+        preco = request.form['preco']
+        data = request.form['data']
+        
+        cursor.execute('''
+            UPDATE itens SET nome = ?, quantidade = ?, preco = ?, data = ?
+            WHERE id = ?
+        ''', (nome, quantidade, preco, data, id))
+        conexao.commit()
+        conexao.close()
+        return redirect(url_for('index'))
+    
+    cursor.execute('SELECT id, nome, quantidade, preco, data FROM itens WHERE id = ?', (id,))
+    item = cursor.fetchone()
     conexao.close()
-    return redirect('/')
+    return render_template('editar.html', item=item)
 
-
-# Garante que o banco exista (e esteja atualizado) ao iniciar, inclusive via gunicorn
-criar_ou_atualizar_banco(app.config['DATABASE'])
+@app.route('/login/google')
+def login_google():
+    # Rota preparada para integração de autenticação externa (Google OAuth)
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Para ativar o modo debug apenas no desenvolvimento: FLASK_DEBUG=1 python app.py
-    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
+    app.run(debug=True)
