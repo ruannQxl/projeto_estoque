@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
 estoque.db
+.secret_key
 .env

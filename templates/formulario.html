@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% set edicao = (modo == 'edicao') %}
+{% set titulo = 'Editar Componente' if edicao else 'Cadastrar Novo Componente' %}
+
+{% block title %}{% if erros %}Erro no formulário - {% endif %}TechFix - {{ titulo }}{% endblock %}
+
+{% block main_class %}main-narrow{% endblock %}
+
+{# Campo reutilizável: rótulo associado, indicação de obrigatório/opcional, ajuda e erro ligados ao input #}
+{% macro campo(id, rotulo, obrigatorio=false, tipo='text', placeholder='', ajuda='', attrs='') %}
+    {% set descricao = [] %}
+    {% if ajuda %}{% set _ = descricao.append('ajuda-' ~ id) %}{% endif %}
+    {% if id in erros %}{% set _ = descricao.append('erro-' ~ id) %}{% endif %}
+    <div class="form-group">
+        <label for="{{ id }}">{{ rotulo }}{% if obrigatorio %} <span aria-hidden="true">*</span>{% else %} <span class="opcional">(opcional)</span>{% endif %}</label>
+        {% if ajuda %}<p class="ajuda" id="ajuda-{{ id }}">{{ ajuda }}</p>{% endif %}
+        <input type="{{ tipo }}" id="{{ id }}" name="{{ id }}" value="{{ form.get(id, '') }}"
+               placeholder="{{ placeholder }}"
+               {% if obrigatorio %}required{% endif %}
+               {% if id in erros %}aria-invalid="true"{% endif %}
+               {% if descricao %}aria-describedby="{{ descricao|join(' ') }}"{% endif %}
+               {{ attrs|safe }}>
+        {% if id in erros %}<p class="erro-campo" id="erro-{{ id }}">{{ erros[id] }}</p>{% endif %}
+    </div>
+{% endmacro %}
+
+{% block content %}
+    <div class="card-form">
+        <h1 class="form-title">{{ titulo }}{% if edicao %} <span class="opcional">(código #{{ peca_id }})</span>{% endif %}</h1>
+        <p class="subtitle">
+            {% if edicao %}Altere os dados do item e salve.{% else %}Preencha os dados do item para registro.{% endif %}
+            Campos marcados com * são obrigatórios.
+        </p>
+
+        {% if erros %}
+        <div class="erro" id="resumo-erros" role="alert" tabindex="-1" aria-labelledby="resumo-erros-titulo">
+            <h2 id="resumo-erros-titulo">Corrija os campos abaixo para salvar:</h2>
+            <ul>
+                {% for campo_com_erro, mensagem in erros.items() %}
+                <li><a href="#{{ campo_com_erro }}">{{ mensagem }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form action="{{ '/editar/' ~ peca_id if edicao else '/cadastrar' }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {{ campo('nome', 'Nome da Peça (Ex: Tela iPhone 13 / SSD 512GB)', true, 'text', 'Digite o nome do componente') }}
+
+            <div class="form-row">
+                {{ campo('quantidade', 'Quantidade', true, 'number', '0', '', 'min="0" step="1" inputmode="numeric"') }}
+                {{ campo('preco', 'Preço Unitário (R$)', true, 'number', '0.00', '', 'min="0" step="0.01" inputmode="decimal"') }}
+            </div>
+
+            {{ campo('data', 'Data de Entrada', true, 'date', '', 'Data em que a peça entrou no estoque.', 'max="' ~ hoje ~ '"') }}
+
+            {{ campo('fornecedor', 'Fornecedor da Peça (Nome do vendedor ou empresa)', false, 'text', 'Digite o nome do fornecedor') }}
+
+            {{ campo('observacao', 'Observação', false, 'text', 'Digite uma observação') }}
+
+            <div class="btn-group">
+                <a href="/" class="btn-cancel">Cancelar<span class="sr-only"> e voltar à lista</span></a>
+                <button type="submit" class="btn-submit">{{ 'Salvar alterações' if edicao else 'Salvar Peça' }}</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Leva o foco para o resumo de erros quando o formulário volta com problemas
+        const resumoErros = document.getElementById('resumo-erros');
+        if (resumoErros) { resumoErros.focus(); }
+    </script>
+{% endblock %}

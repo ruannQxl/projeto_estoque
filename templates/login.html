@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}TechFix - Entrar{% endblock %}
+
+{% block main_class %}main-narrow{% endblock %}
+
+{% block content %}
+    <div class="card-form">
+        <h1 class="form-title">Entrar no sistema</h1>
+        <p class="subtitle">O acesso é feito com a sua conta Google e é restrito a e-mails autorizados por um administrador.</p>
+
+        {% if configurado %}
+            <div class="btn-group">
+                <a href="/auth/google?next={{ destino|urlencode }}" class="btn-submit btn-link">Entrar com Google</a>
+            </div>
+            <p class="ajuda" style="margin-top: 16px;">Você será levado ao site do Google para escolher a conta e voltará aqui em seguida.</p>
+        {% else %}
+            <div class="aviso" role="note">
+                O login com o Google ainda não foi configurado neste servidor. Defina as variáveis
+                <strong>GOOGLE_CLIENT_ID</strong> e <strong>GOOGLE_CLIENT_SECRET</strong> (veja o README).
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} - TechFix{% endblock %}
+
+{% block main_class %}main-narrow{% endblock %}
+
+{% block content %}
+    <div class="card-form">
+        <h1 class="form-title">{{ titulo }}</h1>
+        <p class="subtitle">{{ mensagem }}</p>
+        <div class="btn-group">
+            <a href="/" class="btn-primary">Voltar para a página inicial</a>
+        </div>
+    </div>
+{% endblock %}

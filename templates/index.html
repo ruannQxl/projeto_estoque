@@ -1,53 +1,100 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Estoque</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #0056b3; color: white; }
-        a { color: #0056b3; text-decoration: none; }
-        a:focus, button:focus { outline: 3px solid #ffbf47; }
-        .nav-links { margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <main>
-        <h1>Itens em Estoque</h1>
-        <nav class="nav-links" aria-label="Navegação principal">
-            <a href="/cadastro" aria-label="Cadastrar novo item no estoque">Cadastrar Novo Item</a> | 
-            <a href="/login/google" aria-label="Fazer login utilizando API do Google">Login com Google</a>
-        </nav>
-        <table>
-            <caption>Relação dos produtos cadastrados no sistema</caption>
-            <thead>
-                <tr>
-                    <th scope="col">Nome</th>
-                    <th scope="col">Quantidade</th>
-                    <th scope="col">Preço</th>
-                    <th scope="col">Data</th>
-                    <th scope="col">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in itens %}
-                <tr>
-                    <td>{{ item[1] }}</td>
-                    <td>{{ item[2] }}</td>
-                    <td>R$ {{ item[3] }}</td>
-                    <td>{{ item[4] }}</td>
-                    <td><a href="/editar/{{ item[0] }}" aria-label="Editar item {{ item[1] }}">Editar</a></td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5">Nenhum item cadastrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </main>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}TechFix Enterprise - Controle de Estoque{% endblock %}
+
+{% block nav_extra %}
+    <div class="nav-user">Painel Acadêmico • Online</div>
+{% endblock %}
+
+{% block main_class %}main-wide{% endblock %}
+
+{% block content %}
+    <h1 class="sr-only">Controle de estoque</h1>
+
+    <section aria-labelledby="resumo-titulo">
+        <h2 id="resumo-titulo" class="sr-only">Resumo do estoque</h2>
+        <dl class="metrics-grid">
+            <div class="metric-card">
+                <dt class="metric-title">Tipos de Peças Cadastradas</dt>
+                <dd class="metric-value">{{ total_tipos }}</dd>
+            </div>
+            <div class="metric-card success">
+                <dt class="metric-title">Total de Unidades em Estoque</dt>
+                <dd class="metric-value">{{ total_unidades }} un.</dd>
+            </div>
+            <div class="metric-card warning">
+                <dt class="metric-title">Valor Total do Estoque</dt>
+                <dd class="metric-value">R$ {{ "%.2f"|format(valor_total_estoque) }}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <div class="toolbar">
+        <form action="/" method="GET" class="search-form" role="search">
+            <label for="busca" class="sr-only">Pesquisar peça pelo nome</label>
+            <input type="text" id="busca" name="busca" class="search-input" placeholder="Pesquisar peça pelo nome..." value="{{ termo_busca }}">
+            <button type="submit" class="btn-search">Buscar</button>
+            {% if termo_busca %}
+                <a href="/" class="btn-clear">Limpar<span class="sr-only"> busca</span></a>
+            {% endif %}
+        </form>
+        <a href="/cadastrar" class="btn-primary"><span aria-hidden="true">+</span> Nova Peça</a>
+    </div>
+
+    <p class="result-info" role="status">
+        {{ total_tipos }} {{ 'peça listada' if total_tipos == 1 else 'peças listadas' }}{% if termo_busca %} para a busca "{{ termo_busca }}"{% endif %}.
+    </p>
+
+    <section class="card" aria-labelledby="tabela-titulo">
+        <h2 id="tabela-titulo" class="sr-only">Lista de peças</h2>
+        <div class="table-responsive" role="region" aria-labelledby="tabela-titulo" tabindex="0">
+            <table>
+                <caption class="sr-only">Peças em estoque, com código, quantidade, preço unitário, data de entrada, fornecedor e observação</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Nome do Componente</th>
+                        <th scope="col">Quantidade</th>
+                        <th scope="col">Preço Unitário</th>
+                        <th scope="col">Data de Entrada</th>
+                        <th scope="col">Fornecedor</th>
+                        <th scope="col">Observação</th>
+                        <th scope="col" style="text-align: right;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for peca in pecas %}
+                    <tr>
+                        <td><span class="id-badge"><span class="sr-only">Código </span>#{{ peca[0] }}</span></td>
+                        <th scope="row">{{ peca[1] }}</th>
+                        <td>{{ peca[2] }} unidades</td>
+                        <td><span class="price-tag">R$ {{ "%.2f"|format(peca[3]) }}</span></td>
+                        <td>{% if peca[6]|data_br %}<time datetime="{{ peca[6] }}">{{ peca[6]|data_br }}</time>{% else %}Não informada{% endif %}</td>
+                        <td>{{ peca[4] or "-" }}</td>
+                        <td>{{ peca[5] or "-" }}</td>
+                        <td>
+                            <div class="acoes">
+                                <a href="/editar/{{ peca[0] }}" class="btn-edit">Editar<span class="sr-only"> {{ peca[1] }}</span></a>
+                                <form action="/deletar/{{ peca[0] }}" method="POST" onsubmit='return confirm("Deseja excluir " + {{ peca[1]|tojson }} + "?");'>
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn-delete">Excluir<span class="sr-only"> {{ peca[1] }}</span></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            {% if termo_busca %}
+                                Nenhum resultado encontrado para "{{ termo_busca }}".
+                            {% else %}
+                                Nenhum componente registrado no sistema atualmente.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endblock %}

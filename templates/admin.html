@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}TechFix - Administração{% endblock %}
+
+{% block main_class %}main-wide{% endblock %}
+
+{% block content %}
+    <h1 class="form-title">Administração</h1>
+    <p class="subtitle">Veja quem está acessando o sistema e gerencie quais e-mails têm permissão para entrar. Recarregue a página para atualizar os dados.</p>
+
+    <section class="secao" aria-labelledby="online-titulo">
+        <h2 id="online-titulo">Quem está acessando agora</h2>
+        <p>Pessoas com atividade nos últimos {{ minutos_online }} minutos: <strong>{{ online|length }}</strong>.</p>
+        <div class="card">
+            <div class="table-responsive" role="region" aria-labelledby="online-titulo" tabindex="0">
+                <table>
+                    <caption class="sr-only">Pessoas com sessão ativa, com e-mail, endereço IP, navegador, início da sessão e última atividade</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Pessoa</th>
+                            <th scope="col">E-mail</th>
+                            <th scope="col">Endereço IP</th>
+                            <th scope="col">Navegador</th>
+                            <th scope="col">Entrou em</th>
+                            <th scope="col">Última atividade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nome, email, papel, ip, navegador, inicio, ultima in online %}
+                        <tr>
+                            <th scope="row">{{ nome }}{% if papel == 'admin' %} <span class="badge badge-neutro">Administrador</span>{% endif %}</th>
+                            <td>{{ email }}</td>
+                            <td>{{ ip or '-' }}</td>
+                            <td>{{ navegador|navegador_resumo }}</td>
+                            <td>{{ inicio|datahora_br }}</td>
+                            <td>{{ ultima|datahora_br }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="empty-state">Ninguém com atividade recente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="secao" aria-labelledby="usuarios-titulo">
+        <h2 id="usuarios-titulo">E-mails autorizados</h2>
+        <p>Somente estes e-mails conseguem entrar com a conta Google.</p>
+
+        <div class="card card-pad" style="margin-bottom: 20px;">
+            <form action="/admin/usuarios" method="POST" class="form-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="novo-email">E-mail da conta Google <span aria-hidden="true">*</span></label>
+                    <input type="email" id="novo-email" name="email" required autocomplete="off" placeholder="pessoa@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label for="novo-papel">Papel</label>
+                    <select id="novo-papel" name="papel">
+                        <option value="usuario">Usuário (acessa o estoque)</option>
+                        <option value="admin">Administrador (também vê esta área)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">Autorizar e-mail</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive" role="region" aria-labelledby="usuarios-titulo" tabindex="0">
+                <table>
+                    <caption class="sr-only">E-mails autorizados, com papel, situação, último acesso e ações</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">E-mail</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">Papel</th>
+                            <th scope="col">Situação</th>
+                            <th scope="col">Último acesso</th>
+                            <th scope="col" style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for id, email, nome, papel, ativo, ultimo in contas %}
+                        <tr>
+                            <th scope="row">{{ email }}</th>
+                            <td>{{ nome or '-' }}</td>
+                            <td>{{ 'Administrador' if papel == 'admin' else 'Usuário' }}</td>
+                            <td><span class="badge {{ 'badge-ok' if ativo else 'badge-neutro' }}">{{ 'Ativo' if ativo else 'Desativado' }}</span></td>
+                            <td>{{ ultimo|datahora_br }}</td>
+                            <td>
+                                {% if email == conta.email %}
+                                    <span class="ajuda" style="margin: 0;">Sua conta</span>
+                                {% elif email in fixos %}
+                                    <span class="ajuda" style="margin: 0;">Definido na configuração</span>
+                                {% else %}
+                                <div class="acoes">
+                                    <form action="/admin/usuarios/{{ id }}/papel" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn-secundario">{{ 'Tornar usuário comum' if papel == 'admin' else 'Tornar administrador' }}<span class="sr-only"> {{ email }}</span></button>
+                                    </form>
+                                    <form action="/admin/usuarios/{{ id }}/ativo" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="{{ 'btn-delete' if ativo else 'btn-edit' }}">{{ 'Desativar' if ativo else 'Reativar' }}<span class="sr-only"> {{ email }}</span></button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="empty-state">Nenhum e-mail autorizado ainda.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="secao" aria-labelledby="historico-titulo">
+        <h2 id="historico-titulo">Histórico de acessos</h2>
+        <p>Os {{ limite_historico }} eventos mais recentes, do mais novo para o mais antigo. Tentativas de pessoas não autorizadas aparecem como "Acesso negado".</p>
+        <div class="card">
+            <div class="table-responsive" role="region" aria-labelledby="historico-titulo" tabindex="0">
+                <table>
+                    <caption class="sr-only">Histórico de entradas, saídas e acessos negados, com data e hora, pessoa, endereço IP e navegador</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Data e hora</th>
+                            <th scope="col">Evento</th>
+                            <th scope="col">Pessoa</th>
+                            <th scope="col">E-mail</th>
+                            <th scope="col">Endereço IP</th>
+                            <th scope="col">Navegador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quando, evento, pessoa, email, ip, navegador in historico %}
+                        <tr>
+                            <td>{{ quando|datahora_br }}</td>
+                            <td>
+                                {% if evento == 'entrada' %}<span class="badge badge-ok">Entrou</span>
+                                {% elif evento == 'saida' %}<span class="badge badge-neutro">Saiu</span>
+                                {% else %}<span class="badge badge-negado">Acesso negado</span>{% endif %}
+                            </td>
+                            <th scope="row">{{ pessoa }}</th>
+                            <td>{{ email or '-' }}</td>
+                            <td>{{ ip or '-' }}</td>
+                            <td>{{ navegador|navegador_resumo }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="empty-state">Nenhum acesso registrado ainda.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}
