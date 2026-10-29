@@ -53,6 +53,14 @@ Os administradores liberam e-mails em **Administração → E-mails autorizados*
     python autorizar_email.py pessoa@gmail.com          # usuário comum
     python autorizar_email.py pessoa@gmail.com admin    # administrador
 
+### Entrar com e-mail e senha
+
+Além do Google, a pessoa pode entrar com e-mail e senha na própria tela de login.
+Quem não tem acesso preenche o pedido em **Solicite ao administrador** (nome, e-mail e uma senha
+de pelo menos 8 caracteres). O pedido fica em **Administração → Pedidos de acesso pendentes**:
+ao **aprovar** (escolhendo usuário ou administrador), a conta é criada com a senha cadastrada no
+pedido; ao **recusar**, nada é liberado e a pessoa pode pedir de novo depois.
+
 ## Área do administrador (`/admin`)
 
 - **Quem está acessando agora:** pessoas com atividade nos últimos 5 minutos (nome, e-mail, IP, navegador).

@@ -6,10 +6,12 @@ automaticamente pelo app.py ao iniciar. Se o banco já existir com um esquema
 antigo, ele é atualizado sem apagar os itens cadastrados.
 
 Tabelas:
-  pecas    - itens do estoque
-  contas   - e-mails autorizados a entrar (papel: 'admin' ou 'usuario')
-  sessoes  - sessões de login (para saber quem está online agora)
-  acessos  - histórico de entradas, saídas e acessos negados
+  pecas                - itens do estoque
+  contas               - e-mails autorizados a entrar (papel: 'admin' ou 'usuario');
+                         senha_hash é preenchido quando a pessoa tem login com e-mail e senha
+  solicitacoes_acesso  - pedidos de acesso feitos pelo formulário público (aguardam o administrador)
+  sessoes              - sessões de login (para saber quem está online agora)
+  acessos              - histórico de entradas, saídas e acessos negados
 """
 
 import os
@@ -18,11 +20,19 @@ from datetime import datetime, timezone
 
 CAMINHO_PADRAO = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estoque.db')
 
-# Colunas que podem faltar em bancos criados antes: nome -> tipo
+# Colunas que podem faltar em bancos criados antes: tabela -> {coluna: tipo}
 COLUNAS_OPCIONAIS = {
-    'fornecedor': 'TEXT',
-    'observacao': 'TEXT',
-    'data': 'TEXT',  # data de entrada da peça (AAAA-MM-DD)
+    'pecas': {
+        'fornecedor': 'TEXT',
+        'observacao': 'TEXT',
+        'data': 'TEXT',  # data de entrada da peça (AAAA-MM-DD)
+    },
+    'contas': {
+        'senha_hash': 'TEXT',
+    },
+    'solicitacoes_acesso': {
+        'senha_hash': 'TEXT',
+    },
 }
 
 # Campos que deixaram de existir no sistema
@@ -38,6 +48,7 @@ def criar_ou_atualizar_banco(caminho=CAMINHO_PADRAO):
     conexao = sqlite3.connect(caminho)
     cursor = conexao.cursor()
 
+    # Tabela principal de peças/itens do estoque
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pecas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,11 +61,13 @@ def criar_ou_atualizar_banco(caminho=CAMINHO_PADRAO):
         )
     ''')
 
+    # E-mails autorizados a entrar (com Google e/ou com e-mail e senha)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS contas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT NOT NULL UNIQUE,
             nome TEXT,
+            senha_hash TEXT,
             papel TEXT NOT NULL DEFAULT 'usuario' CHECK (papel IN ('admin', 'usuario')),
             ativo INTEGER NOT NULL DEFAULT 1,
             criado_em TEXT NOT NULL,
@@ -62,6 +75,19 @@ def criar_ou_atualizar_banco(caminho=CAMINHO_PADRAO):
         )
     ''')
 
+    # Pedidos de acesso enviados por quem não tem conta (status: pendente, aprovada ou recusada)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS solicitacoes_acesso (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            nome TEXT NOT NULL,
+            senha_hash TEXT,
+            criado_em TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pendente'
+        )
+    ''')
+
+    # Tabela de controle de sessões ativas
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessoes (
             sid TEXT PRIMARY KEY,
@@ -74,6 +100,7 @@ def criar_ou_atualizar_banco(caminho=CAMINHO_PADRAO):
         )
     ''')
 
+    # Tabela de logs de acesso
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS acessos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,15 +113,19 @@ def criar_ou_atualizar_banco(caminho=CAMINHO_PADRAO):
         )
     ''')
 
-    # A tabela de usuários com senha pertencia ao login local, que foi substituído pelo login com o Google
+    # Remove tabela antiga de senhas locais, caso exista de versões anteriores
     cursor.execute('DROP TABLE IF EXISTS usuarios')
+    # Remove tabela antiga 'itens' caso tenha ficado sobrando de versões passadas
+    cursor.execute('DROP TABLE IF EXISTS itens')
 
-    # Migração de bancos antigos
+    # Migração de bancos antigos: adiciona as colunas que faltam (sem apagar dados)
+    for tabela, colunas in COLUNAS_OPCIONAIS.items():
+        existentes = {linha[1] for linha in cursor.execute(f'PRAGMA table_info({tabela})')}
+        for coluna, tipo in colunas.items():
+            if coluna not in existentes:
+                cursor.execute(f'ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}')
+
     existentes = {linha[1] for linha in cursor.execute('PRAGMA table_info(pecas)')}
-    for coluna, tipo in COLUNAS_OPCIONAIS.items():
-        if coluna not in existentes:
-            cursor.execute(f'ALTER TABLE pecas ADD COLUMN {coluna} {tipo}')
-
     for coluna in COLUNAS_REMOVIDAS:
         if coluna in existentes:
             try:

@@ -5,20 +5,49 @@
 {% block main_class %}main-narrow{% endblock %}
 
 {% block content %}
-    <div class="card-form">
-        <h1 class="form-title">Entrar no sistema</h1>
-        <p class="subtitle">O acesso é feito com a sua conta Google e é restrito a e-mails autorizados por um administrador.</p>
+<div class="card-form">
+    <h1 class="form-title">Entrar no sistema</h1>
+    <p class="subtitle">O acesso é restrito a pessoas autorizadas por um administrador. Entre com a sua conta Google ou com e-mail e senha.</p>
 
-        {% if configurado %}
-            <div class="btn-group">
-                <a href="/auth/google?next={{ destino|urlencode }}" class="btn-submit btn-link">Entrar com Google</a>
-            </div>
-            <p class="ajuda" style="margin-top: 16px;">Você será levado ao site do Google para escolher a conta e voltará aqui em seguida.</p>
-        {% else %}
-            <div class="aviso" role="note">
-                O login com o Google ainda não foi configurado neste servidor. Defina as variáveis
-                <strong>GOOGLE_CLIENT_ID</strong> e <strong>GOOGLE_CLIENT_SECRET</strong> (veja o README).
-            </div>
-        {% endif %}
-    </div>
+    {% if erro %}
+        <div class="erro" role="alert"><p style="margin: 0;">{{ erro }}</p></div>
+    {% endif %}
+
+    {% if configurado %}
+        <div class="btn-group" style="margin-top: 0;">
+            <a href="/auth/google?next={{ destino|urlencode }}" class="btn-submit btn-link">Entrar com Google</a>
+        </div>
+        <p class="ajuda" style="margin-top: 12px;">Você será levado ao site do Google para escolher a conta e voltará aqui em seguida.</p>
+    {% else %}
+        <div class="aviso" role="note">
+            O login com o Google ainda não foi configurado neste servidor. Defina as variáveis
+            <strong>GOOGLE_CLIENT_ID</strong> e <strong>GOOGLE_CLIENT_SECRET</strong> (veja o README).
+        </div>
+    {% endif %}
+
+    <p class="ajuda" style="text-align: center; margin: 24px 0 16px 0;">Ou entre com e-mail e senha:</p>
+
+    <form method="POST" action="/login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ destino }}">
+
+        <div class="form-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha" required autocomplete="current-password">
+        </div>
+
+        <div class="btn-group" style="margin-top: 0;">
+            <button type="submit" class="btn-submit">Entrar com e-mail e senha</button>
+        </div>
+    </form>
+
+    <p class="ajuda" style="margin-top: 24px;">
+        Não tem acesso? <a href="/solicitar-acesso" style="color: var(--primary); font-weight: 600;">Solicite ao administrador</a>.
+    </p>
+</div>
 {% endblock %}

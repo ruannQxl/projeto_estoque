@@ -1,3 +1,4 @@
+import math
 import os
 import re
 import secrets
@@ -5,6 +6,7 @@ import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from functools import wraps
 from urllib.parse import urlparse
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import (Flask, abort, flash, g, jsonify, redirect, render_template,
                    request, session, url_for)
@@ -46,6 +48,7 @@ COLUNAS = 'id, nome, quantidade, preco, fornecedor, observacao, data'
 MINUTOS_ONLINE = 5          # quem teve atividade nesse intervalo aparece como "online"
 REGISTRO_RECENTE = 50       # quantidade de eventos exibidos no histórico de acessos
 EMAIL_VALIDO = re.compile(r'[^@\s]+@[^@\s]+\.[^@\s]+')
+SENHA_MINIMA = 8           # tamanho mínimo da senha no login com e-mail e senha
 
 # ------------------------------------------------------------------ utilidades
 
@@ -249,7 +252,9 @@ def validar_formulario(form):
     preco = None
     try:
         preco = float(form.get('preco', '').replace(',', '.'))
-        if preco < 0:
+        if not math.isfinite(preco):
+            erros['preco'] = 'O preço deve ser um número válido.'
+        elif preco < 0:
             erros['preco'] = 'O preço não pode ser negativo.'
     except ValueError:
         erros['preco'] = 'O preço deve ser um número válido.'
@@ -267,15 +272,105 @@ def validar_formulario(form):
     return (nome, quantidade, preco, fornecedor, observacao, data), {}
 
 
-# ------------------------------------------------------- login com o Google
+# ------------------------------------------------- login com e-mail/senha e com o Google
 
 
-@app.route('/login')
+def iniciar_sessao(conexao, email, nome, destino):
+    """Abre a sessão da pessoa, registra a entrada e redireciona para o destino seguro.
+
+    Usado tanto pelo login com e-mail e senha quanto pelo login com o Google, para que os
+    dois caminhos gravem a sessão e o histórico exatamente da mesma forma.
+    """
+    sid = secrets.token_urlsafe(24)
+    agora = agora_texto()
+    conexao.execute('INSERT INTO sessoes (sid, email, ip, navegador, inicio, ultima_atividade) VALUES (?, ?, ?, ?, ?, ?)',
+                    (sid, email, ip_do_cliente(), navegador_do_cliente(), agora, agora))
+    conexao.execute('UPDATE contas SET nome = COALESCE(?, nome), ultimo_acesso = ? WHERE email = ?',
+                    (nome, agora, email))
+    registrar_acesso(conexao, 'entrada', email, nome)
+    conexao.commit()
+    conexao.close()
+
+    session.clear()  # nova sessão após o login (não reaproveita a sessão anterior)
+    session['sid'] = sid
+    session.permanent = True
+    return redirect(destino_seguro(destino))
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    destino = destino_seguro(request.args.get('next', ''))
+    """Entrada com e-mail e senha. A entrada com o Google é feita por /auth/google."""
     if g.conta:
-        return redirect(destino)
-    return render_template('login.html', destino=destino, configurado=google_configurado())
+        return redirect('/')
+
+    erro, email = None, ''
+    if request.method == 'POST':
+        destino = destino_seguro(request.form.get('next', ''))
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+
+        conexao = conectar()
+        conta = conexao.execute(
+            'SELECT email, nome, senha_hash, ativo FROM contas WHERE email = ?', (email,)).fetchone()
+        if conta and conta[3] and conta[2] and check_password_hash(conta[2], senha):
+            return iniciar_sessao(conexao, conta[0], conta[1], destino)
+
+        if conta:  # tentativas erradas em contas existentes ficam no histórico como "negado"
+            registrar_acesso(conexao, 'negado', email, conta[1])
+            conexao.commit()
+        conexao.close()
+        # Mesma mensagem para e-mail inexistente, senha errada ou conta inativa (não revela contas)
+        erro = 'E-mail ou senha inválidos, ou conta inativa.'
+    else:
+        destino = destino_seguro(request.args.get('next', ''))
+
+    return render_template('login.html', erro=erro, email=email, destino=destino,
+                           configurado=google_configurado())
+
+
+@app.route('/solicitar-acesso', methods=['GET', 'POST'])
+def solicitar_acesso():
+    """Pedido de acesso para quem não tem conta: fica pendente até um administrador aprovar."""
+    erro, enviado, nome, email = None, False, '', ''
+    if request.method == 'POST':
+        nome = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+        confirmacao = request.form.get('confirmar_senha', '')
+
+        if not nome:
+            erro = 'Informe o seu nome.'
+        elif not EMAIL_VALIDO.fullmatch(email):
+            erro = 'Informe um e-mail válido.'
+        elif len(senha) < SENHA_MINIMA:
+            erro = f'A senha deve ter pelo menos {SENHA_MINIMA} caracteres.'
+        elif senha != confirmacao:
+            erro = 'A confirmação da senha não confere com a senha informada.'
+        else:
+            conexao = conectar()
+            tem_conta = conexao.execute('SELECT 1 FROM contas WHERE email = ?', (email,)).fetchone()
+            pedido = conexao.execute(
+                'SELECT status FROM solicitacoes_acesso WHERE email = ?', (email,)).fetchone()
+            if tem_conta:
+                erro = ('Este e-mail já possui cadastro. Tente entrar; se não conseguir, '
+                        'peça ajuda a um administrador.')
+            elif pedido and pedido[0] == 'pendente':
+                erro = 'Já existe um pedido pendente para este e-mail. Aguarde a análise do administrador.'
+            else:
+                valores = (nome, generate_password_hash(senha), agora_texto())
+                if pedido:  # pedido recusado antes: reabre com os dados novos
+                    conexao.execute(
+                        "UPDATE solicitacoes_acesso SET nome = ?, senha_hash = ?, criado_em = ?, "
+                        "status = 'pendente' WHERE email = ?", valores + (email,))
+                else:
+                    conexao.execute(
+                        'INSERT INTO solicitacoes_acesso (email, nome, senha_hash, criado_em) '
+                        'VALUES (?, ?, ?, ?)', (email,) + valores)
+                conexao.commit()
+                enviado = True
+            conexao.close()
+
+    return render_template('solicitar_acesso.html', erro=erro, enviado=enviado, nome=nome, email=email)
 
 
 @app.route('/auth/google')
@@ -328,8 +423,8 @@ def callback_google():
     nome = str(perfil.get('name') or '').strip() or None
     verificado = perfil.get('email_verified') in (True, 'true')
 
-    conexao = conectar()
     if not email or not verificado:
+        conexao = conectar()
         registrar_acesso(conexao, 'negado', email or None, nome)
         conexao.commit()
         conexao.close()
@@ -337,31 +432,17 @@ def callback_google():
 
     # Administradores definidos na configuração sempre têm acesso
     if email in emails_admin():
-        conexao.close()
         autorizar_email(app.config['DATABASE'], email, 'admin', nome)
-        conexao = conectar()
 
-    conta = conexao.execute('SELECT email, ativo FROM contas WHERE email = ?', (email,)).fetchone()
-    if conta is None or not conta[1]:
+    conexao = conectar()
+    conta = conexao.execute('SELECT ativo FROM contas WHERE email = ?', (email,)).fetchone()
+    if conta is None or not conta[0]:
         registrar_acesso(conexao, 'negado', email, nome)
         conexao.commit()
         conexao.close()
         return falha('Este e-mail não está autorizado a acessar o sistema. Peça a um administrador para liberá-lo.')
 
-    sid = secrets.token_urlsafe(24)
-    agora = agora_texto()
-    conexao.execute('INSERT INTO sessoes (sid, email, ip, navegador, inicio, ultima_atividade) VALUES (?, ?, ?, ?, ?, ?)',
-                    (sid, email, ip_do_cliente(), navegador_do_cliente(), agora, agora))
-    conexao.execute('UPDATE contas SET nome = COALESCE(?, nome), ultimo_acesso = ? WHERE email = ?',
-                    (nome, agora, email))
-    registrar_acesso(conexao, 'entrada', email, nome)
-    conexao.commit()
-    conexao.close()
-
-    session.clear()  # nova sessão após o login
-    session['sid'] = sid
-    session.permanent = True
-    return redirect(destino_seguro(dados_oauth['destino']))
+    return iniciar_sessao(conexao, email, nome, dados_oauth['destino'])
 
 
 @app.route('/logout', methods=['POST'])
@@ -402,8 +483,11 @@ def admin():
         'ORDER BY id DESC LIMIT ?', (REGISTRO_RECENTE,)).fetchall()
     contas = conexao.execute(
         'SELECT id, email, nome, papel, ativo, ultimo_acesso FROM contas ORDER BY papel, email').fetchall()
+    pendentes = conexao.execute(
+        "SELECT id, nome, email, criado_em FROM solicitacoes_acesso WHERE status = 'pendente' "
+        'ORDER BY criado_em').fetchall()
     conexao.close()
-    return render_template('admin.html', online=online, historico=historico, contas=contas,
+    return render_template('admin.html', online=online, historico=historico, contas=contas, pendentes=pendentes,
                            fixos=emails_admin(), minutos_online=MINUTOS_ONLINE,
                            limite_historico=REGISTRO_RECENTE)
 
@@ -466,6 +550,51 @@ def admin_alternar_papel(id):
         conexao.commit()
         flash(f'{conta[1]} agora é {"administrador" if novo == "admin" else "usuário comum"}.', 'sucesso')
     conexao.close()
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/solicitacoes/<int:id>/aprovar', methods=['POST'])
+@admin_required
+def admin_aprovar_solicitacao(id):
+    """Libera o pedido: cria a conta com o papel escolhido e a senha que a pessoa cadastrou."""
+    papel = request.form.get('papel', 'usuario')
+    conexao = conectar()
+    pedido = conexao.execute(
+        "SELECT email, nome, senha_hash FROM solicitacoes_acesso WHERE id = ? AND status = 'pendente'",
+        (id,)).fetchone()
+    conexao.close()
+
+    if pedido is None:
+        flash('Este pedido não existe mais ou já foi respondido.', 'erro')
+    elif papel not in ('admin', 'usuario'):
+        flash('Escolha um papel válido.', 'erro')
+    else:
+        email, nome, senha_hash = pedido
+        autorizar_email(app.config['DATABASE'], email, papel, nome)
+        conexao = conectar()
+        conexao.execute('UPDATE contas SET senha_hash = ? WHERE email = ?', (senha_hash, email))
+        # A senha já foi copiada para a conta; o pedido guarda só o registro da decisão
+        conexao.execute("UPDATE solicitacoes_acesso SET status = 'aprovada', senha_hash = NULL WHERE id = ?", (id,))
+        conexao.commit()
+        conexao.close()
+        flash(f'Pedido de {email} aprovado como {"administrador" if papel == "admin" else "usuário"}.', 'sucesso')
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/solicitacoes/<int:id>/recusar', methods=['POST'])
+@admin_required
+def admin_recusar_solicitacao(id):
+    conexao = conectar()
+    cursor = conexao.execute(
+        "UPDATE solicitacoes_acesso SET status = 'recusada', senha_hash = NULL WHERE id = ? AND status = 'pendente'",
+        (id,))
+    conexao.commit()
+    recusados = cursor.rowcount
+    conexao.close()
+    if recusados:
+        flash('Pedido recusado.', 'sucesso')
+    else:
+        flash('Este pedido não existe mais ou já foi respondido.', 'erro')
     return redirect(url_for('admin'))
 
 

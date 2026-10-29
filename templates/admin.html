@@ -44,9 +44,57 @@
         </div>
     </section>
 
+    <section class="secao" aria-labelledby="pedidos-titulo">
+        <h2 id="pedidos-titulo">Pedidos de acesso pendentes</h2>
+        <p>Pessoas que pediram acesso com e-mail e senha. Ao aprovar, a conta é criada com a senha que a pessoa cadastrou no pedido.</p>
+        <div class="card">
+            <div class="table-responsive" role="region" aria-labelledby="pedidos-titulo" tabindex="0">
+                <table>
+                    <caption class="sr-only">Pedidos de acesso aguardando aprovação, com data, nome, e-mail e ações</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Pedido em</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">E-mail</th>
+                            <th scope="col" style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido_id, nome, email, criado in pendentes %}
+                        <tr>
+                            <td>{{ criado|datahora_br }}</td>
+                            <th scope="row">{{ nome }}</th>
+                            <td>{{ email }}</td>
+                            <td>
+                                <div class="acoes">
+                                    <form action="/admin/solicitacoes/{{ pedido_id }}/aprovar" method="POST" class="acoes">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <label for="papel-{{ pedido_id }}" class="sr-only">Papel de {{ email }}</label>
+                                        <select id="papel-{{ pedido_id }}" name="papel" style="width: auto;">
+                                            <option value="usuario">Usuário</option>
+                                            <option value="admin">Administrador</option>
+                                        </select>
+                                        <button type="submit" class="btn-edit">Aprovar<span class="sr-only"> {{ email }}</span></button>
+                                    </form>
+                                    <form action="/admin/solicitacoes/{{ pedido_id }}/recusar" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn-delete">Recusar<span class="sr-only"> {{ email }}</span></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="empty-state">Nenhum pedido aguardando aprovação.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <section class="secao" aria-labelledby="usuarios-titulo">
         <h2 id="usuarios-titulo">E-mails autorizados</h2>
-        <p>Somente estes e-mails conseguem entrar com a conta Google.</p>
+        <p>Somente estes e-mails conseguem entrar, com a conta Google ou com e-mail e senha.</p>
 
         <div class="card card-pad" style="margin-bottom: 20px;">
             <form action="/admin/usuarios" method="POST" class="form-inline">

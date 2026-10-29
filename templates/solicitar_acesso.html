@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}TechFix - Solicitar acesso{% endblock %}
+
+{% block main_class %}main-narrow{% endblock %}
+
+{% block content %}
+<div class="card-form">
+    <h1 class="form-title">Solicitar acesso</h1>
+
+    {% if enviado %}
+        <p class="subtitle">Pedido enviado com sucesso. Um administrador vai analisar o seu acesso. Assim que for aprovado, você poderá entrar com este e-mail e a senha que escolheu.</p>
+        <div class="btn-group">
+            <a href="/login" class="btn-primary">Voltar para o login</a>
+        </div>
+    {% else %}
+        <p class="subtitle">Preencha os dados abaixo. Quando um administrador aprovar o pedido, você poderá entrar com o e-mail e a senha cadastrados aqui. Campos marcados com * são obrigatórios.</p>
+
+        {% if erro %}
+            <div class="erro" role="alert"><p style="margin: 0;">{{ erro }}</p></div>
+        {% endif %}
+
+        <form method="POST" action="/solicitar-acesso">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="nome">Nome completo <span aria-hidden="true">*</span></label>
+                <input type="text" id="nome" name="nome" value="{{ nome }}" required autocomplete="name">
+            </div>
+
+            <div class="form-group">
+                <label for="email">E-mail <span aria-hidden="true">*</span></label>
+                <input type="email" id="email" name="email" value="{{ email }}" required autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha <span aria-hidden="true">*</span></label>
+                <p class="ajuda" id="ajuda-senha">Use pelo menos 8 caracteres.</p>
+                <input type="password" id="senha" name="senha" required minlength="8" autocomplete="new-password" aria-describedby="ajuda-senha">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmar_senha">Confirmar senha <span aria-hidden="true">*</span></label>
+                <input type="password" id="confirmar_senha" name="confirmar_senha" required minlength="8" autocomplete="new-password">
+            </div>
+
+            <div class="btn-group">
+                <a href="/login" class="btn-cancel">Voltar<span class="sr-only"> para o login</span></a>
+                <button type="submit" class="btn-submit">Enviar solicitação</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

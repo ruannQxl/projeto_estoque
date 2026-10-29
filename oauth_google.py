@@ -73,7 +73,8 @@ def obter_perfil_google(client_id, client_secret, codigo, verificador, redirect_
     pedido_token = urllib.request.Request(
         URL_TOKEN, data=corpo, method='POST',
         headers={'Content-Type': 'application/x-www-form-urlencoded'})
-    token = _chamar(pedido_token).get('access_token')
+    resposta_token = _chamar(pedido_token)
+    token = resposta_token.get('access_token') if isinstance(resposta_token, dict) else None
     if not token:
         raise ErroOAuth('O Google não devolveu o token de acesso.')
 
